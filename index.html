@@ -90,7 +90,14 @@
         
         // --- App ID and Firebase Config (Provided by Environment) ---
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+          const firebaseConfig = {
+    apiKey: "AIzaSyDHVU7fE_Mez80jLxezXpa6wt_7RMBZiKE",
+    authDomain: "family-tracker-app-7d5f9.firebaseapp.com",
+    projectId: "family-tracker-app-7d5f9",
+    storageBucket: "family-tracker-app-7d5f9.firebasestorage.app",
+    messagingSenderId: "543941177603",
+    appId: "1:543941177603:web:b33beb54ab9b97098bf936"
+  };
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
         // --- Firebase Initialization ---
@@ -360,4 +367,3 @@
     <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCqnryoXw9YC8uL_0zPvqv9_5ewcbctaAk&callback=initMap"></script>
 </body>
 </html>
-
