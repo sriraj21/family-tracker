@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Family Tracker - Your Private Location Sharing App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        #map {
+            height: 100%;
+            width: 100%;
+        }
+        .marker-label {
+            color: black;
+            font-weight: bold;
+            font-size: 14px;
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 2px 6px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 antialiased">
+    <div id="app-container" class="w-full h-screen">
+
+        <!-- Login/Join Screen -->
+        <div id="login-screen" class="flex items-center justify-center h-full">
+            <div class="w-full max-w-md p-8 space-y-6 bg-white rounded-xl shadow-lg m-4">
+                <div class="text-center">
+                    <h1 class="text-3xl font-bold text-gray-800">Family Tracker</h1>
+                    <p class="mt-2 text-gray-600">Create or join a private circle to share your location.</p>
+                </div>
+                
+                <div class="space-y-4">
+                     <div>
+                        <label for="displayName" class="text-sm font-medium text-gray-700">Your Name</label>
+                        <input type="text" id="displayName" placeholder="e.g., Mom, John Doe" class="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label for="circleIdInput" class="text-sm font-medium text-gray-700">Circle ID (to join)</label>
+                        <input type="text" id="circleIdInput" placeholder="Enter ID from a friend or family" class="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-center space-x-4">
+                     <button id="join-circle-btn" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        Join Circle
+                    </button>
+                    <span class="text-gray-500">or</span>
+                    <button id="create-circle-btn" class="w-full flex justify-center py-2 px-4 border border-indigo-600 rounded-md shadow-sm text-sm font-medium text-indigo-600 bg-white hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        Create New
+                    </button>
+                </div>
+                 <p id="error-message" class="text-sm text-center text-red-500"></p>
+            </div>
+        </div>
+
+        <!-- Main App Screen -->
+        <div id="app-screen" class="hidden w-full h-screen relative">
+            <div id="map"></div>
+            <div class="absolute top-0 left-0 m-2 md:m-4 p-2 md:p-4 bg-white rounded-lg shadow-xl max-w-sm w-11/12 md:w-auto">
+                <div class="flex justify-between items-center mb-2">
+                    <h2 class="text-lg md:text-xl font-bold text-gray-800">Your Circle</h2>
+                     <button id="leave-circle-btn" class="px-3 py-1 text-xs font-medium text-red-600 bg-red-100 rounded-md hover:bg-red-200">Leave</button>
+                </div>
+                <div class="mb-2">
+                    <p class="text-sm text-gray-600">Share this ID:</p>
+                    <div class="flex items-center mt-1">
+                        <input type="text" id="shareableCircleId" readonly class="w-full px-2 py-1 text-gray-700 bg-gray-100 border border-gray-300 rounded-md text-sm">
+                        <button id="copy-id-btn" class="ml-2 px-3 py-1 text-xs font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700">Copy</button>
+                    </div>
+                </div>
+                <div id="members-list" class="space-y-2 max-h-48 overflow-y-auto">
+                    <!-- Member items will be injected here -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script type="module">
+        // --- Firebase SDK Imports ---
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot, collection, serverTimestamp, deleteDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        
+        // --- App ID and Firebase Config (Provided by Environment) ---
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        // --- Firebase Initialization ---
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        // --- Global State ---
+        let map;
+        let userId;
+        let currentCircleId = null;
+        let firestoreUnsubscribe = null;
+        let watchId = null;
+        const markers = {};
+
+        // --- DOM Elements ---
+        const loginScreen = document.getElementById('login-screen');
+        const appScreen = document.getElementById('app-screen');
+        const displayNameInput = document.getElementById('displayName');
+        const circleIdInput = document.getElementById('circleIdInput');
+        const createCircleBtn = document.getElementById('create-circle-btn');
+        const joinCircleBtn = document.getElementById('join-circle-btn');
+        const leaveCircleBtn = document.getElementById('leave-circle-btn');
+        const shareableCircleId = document.getElementById('shareableCircleId');
+        const copyIdBtn = document.getElementById('copy-id-btn');
+        const membersList = document.getElementById('members-list');
+        const errorMessage = document.getElementById('error-message');
+
+        // --- Core Functions ---
+
+        /**
+         * Initializes the Google Map.
+         */
+        function initMap() {
+            map = new google.maps.Map(document.getElementById("map"), {
+                center: { lat: 34.0522, lng: -118.2437 }, // Default: Los Angeles
+                zoom: 12,
+                disableDefaultUI: true,
+                zoomControl: true,
+            });
+        }
+        window.initMap = initMap;
+
+        /**
+         * Sets up the location watcher to track user's position.
+         */
+        function startLocationWatcher() {
+            if (watchId) navigator.geolocation.clearWatch(watchId);
+
+            if ('geolocation' in navigator) {
+                watchId = navigator.geolocation.watchPosition(
+                    (position) => {
+                        updateLocationInFirestore(position.coords);
+                    },
+                    (error) => {
+                        console.error("Geolocation error:", error);
+                        errorMessage.textContent = "Location access denied. Please enable it in your browser settings.";
+                    },
+                    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+                );
+            } else {
+                errorMessage.textContent = 'Geolocation is not supported by your browser.';
+            }
+        }
+        
+        /**
+         * Updates the user's location in the Firestore database.
+         * @param {Object} coords - The coordinates object from the Geolocation API.
+         */
+        async function updateLocationInFirestore(coords) {
+            if (!userId || !currentCircleId) return;
+            const memberRef = doc(db, `artifacts/${appId}/public/data/circles/${currentCircleId}/members`, userId);
+            try {
+                await setDoc(memberRef, {
+                    lat: coords.latitude,
+                    lng: coords.longitude,
+                    lastUpdated: serverTimestamp()
+                }, { merge: true });
+            } catch (error) {
+                console.error("Error updating location:", error);
+            }
+        }
+
+        /**
+         * Listens for real-time updates from the current circle.
+         */
+        function listenToCircleChanges() {
+            if (firestoreUnsubscribe) firestoreUnsubscribe();
+            
+            const membersRef = collection(db, `artifacts/${appId}/public/data/circles/${currentCircleId}/members`);
+            firestoreUnsubscribe = onSnapshot(membersRef, (snapshot) => {
+                let membersHTML = '';
+                snapshot.docs.forEach(doc => {
+                    const member = doc.data();
+                    updateMarkerOnMap(doc.id, member);
+                    
+                    const lastUpdatedText = member.lastUpdated ? 
+                        new Date(member.lastUpdated.seconds * 1000).toLocaleTimeString() : '...';
+
+                    const isCurrentUser = doc.id === userId;
+                    const indicatorColor = isCurrentUser ? 'bg-green-500' : 'bg-blue-500';
+
+                    membersHTML += `
+                        <div class="flex items-center p-2 bg-gray-50 rounded-md">
+                            <div class="w-3 h-3 ${indicatorColor} rounded-full mr-3 flex-shrink-0"></div>
+                            <div>
+                                <p class="font-semibold text-gray-800 text-sm">${member.displayName || 'Unnamed'}${isCurrentUser ? ' (You)' : ''}</p>
+                                <p class="text-xs text-gray-500">Last seen: ${lastUpdatedText}</p>
+                            </div>
+                        </div>
+                    `;
+                });
+                membersList.innerHTML = membersHTML;
+                
+                // Cleanup markers for members who left
+                const currentMemberIds = snapshot.docs.map(d => d.id);
+                for (const memberId in markers) {
+                    if (!currentMemberIds.includes(memberId)) {
+                        removeMarker(memberId);
+                    }
+                }
+            });
+        }
+
+        /**
+         * Adds or updates a member's marker on the map.
+         * @param {string} memberId - The unique ID of the member.
+         * @param {Object} memberData - The data of the member from Firestore.
+         */
+        function updateMarkerOnMap(memberId, memberData) {
+            if (!memberData.lat || !memberData.lng) return;
+
+            const position = { lat: memberData.lat, lng: memberData.lng };
+            
+            if (markers[memberId]) {
+                markers[memberId].setPosition(position);
+            } else {
+                markers[memberId] = new google.maps.Marker({
+                    position,
+                    map,
+                    label: {
+                        text: memberData.displayName || '?',
+                        className: 'marker-label'
+                    },
+                    icon: {
+                        path: google.maps.SymbolPath.CIRCLE,
+                        scale: memberId === userId ? 10 : 8,
+                        fillColor: memberId === userId ? '#10B981' : '#3B82F6',
+                        fillOpacity: 1,
+                        strokeWeight: 2,
+                        strokeColor: '#FFFFFF'
+                    }
+                });
+            }
+        }
+        
+        /**
+         * Removes a marker from the map and our tracking object.
+         * @param {string} memberId - The ID of the member whose marker to remove.
+         */
+        function removeMarker(memberId) {
+            if (markers[memberId]) {
+                markers[memberId].setMap(null);
+                delete markers[memberId];
+            }
+        }
+
+        /**
+         * Handles the logic to join or create a circle.
+         */
+        async function joinCircle(circleId) {
+            const displayName = displayNameInput.value.trim();
+            if (!displayName) {
+                errorMessage.textContent = "Please enter your name.";
+                return;
+            }
+            if (!circleId) {
+                errorMessage.textContent = "Circle ID is invalid.";
+                return;
+            }
+
+            currentCircleId = circleId;
+            
+            // Add user to the circle in Firestore
+            const memberRef = doc(db, `artifacts/${appId}/public/data/circles/${currentCircleId}/members`, userId);
+            await setDoc(memberRef, { displayName }, { merge: true });
+
+            // Set a circle document to confirm its existence
+            const circleRef = doc(db, `artifacts/${appId}/public/data/circles`, currentCircleId);
+            await setDoc(circleRef, { createdAt: serverTimestamp() }, { merge: true });
+
+            // Update UI
+            shareableCircleId.value = currentCircleId;
+            loginScreen.classList.add('hidden');
+            appScreen.classList.remove('hidden');
+
+            // Start tracking and listening
+            listenToCircleChanges();
+            startLocationWatcher();
+        }
+
+        // --- Event Listeners ---
+        createCircleBtn.addEventListener('click', () => {
+            // Generate a simple 6-char random ID
+            const newCircleId = Math.random().toString(36).substring(2, 8).toUpperCase();
+            circleIdInput.value = newCircleId;
+            joinCircle(newCircleId);
+        });
+
+        joinCircleBtn.addEventListener('click', () => {
+            const circleId = circleIdInput.value.trim();
+            if (!circleId) {
+                errorMessage.textContent = 'Please enter a Circle ID to join.';
+                return;
+            }
+            joinCircle(circleId);
+        });
+        
+        leaveCircleBtn.addEventListener('click', async () => {
+            if (!userId || !currentCircleId) return;
+
+            // Stop listening and tracking
+            if (firestoreUnsubscribe) firestoreUnsubscribe();
+            if (watchId) navigator.geolocation.clearWatch(watchId);
+            
+            // Remove user from Firestore
+            const memberRef = doc(db, `artifacts/${appId}/public/data/circles/${currentCircleId}/members`, userId);
+            await deleteDoc(memberRef);
+            
+            // Clear local state
+            for (const memberId in markers) {
+                removeMarker(memberId);
+            }
+            currentCircleId = null;
+            
+            // Show login screen
+            appScreen.classList.add('hidden');
+            loginScreen.classList.remove('hidden');
+            circleIdInput.value = '';
+        });
+
+        copyIdBtn.addEventListener('click', () => {
+            shareableCircleId.select();
+            document.execCommand('copy');
+            copyIdBtn.textContent = 'Copied!';
+            setTimeout(() => { copyIdBtn.textContent = 'Copy'; }, 2000);
+        });
+
+        // --- Initialization ---
+        async function main() {
+            try {
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    await signInAnonymously(auth);
+                }
+                userId = auth.currentUser.uid;
+            } catch (error) {
+                console.error("Authentication failed:", error);
+                errorMessage.textContent = "Could not connect to the service. Please refresh.";
+            }
+        }
+
+        main();
+
+    </script>
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key=&callback=initMap"></script>
+</body>
+</html>
