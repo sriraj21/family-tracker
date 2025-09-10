@@ -6,8 +6,6 @@
     <title>Family Tracker - Your Private Location Sharing App</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <!-- This new script loads your Firebase configuration first -->
-    <script src="firebase-config.js"></script>
     <style>
         body { font-family: 'Inter', sans-serif; }
         #map { height: 100%; width: 100%; }
@@ -21,7 +19,6 @@
 </head>
 <body class="bg-gray-100 antialiased">
     <div id="app-container" class="w-full h-screen">
-
         <!-- Login/Join Screen -->
         <div id="login-screen" class="flex items-center justify-center h-full">
             <div class="w-full max-w-md p-8 space-y-6 bg-white rounded-xl shadow-lg m-4">
@@ -49,7 +46,7 @@
         </div>
 
         <!-- Main App Screen -->
-        <div id="app-screen" class="hidden w-full h-screen md-flex">
+        <div id="app-screen" class="hidden w-full h-screen md:flex">
             <div id="map" class="flex-grow h-full"></div>
             <div class="w-full md:w-96 bg-white shadow-xl flex flex-col h-full flex-shrink-0">
                 <div class="p-4 border-b">
@@ -106,18 +103,24 @@
     <script type="module">
         console.log("App script started!");
     
-        // --- Firebase SDK Imports ---
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, onSnapshot, collection, serverTimestamp, deleteDoc, getDoc, addDoc, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         
-        // NOTE: The firebaseConfig object is now loaded from firebase-config.js
-        // This makes the main script cleaner and less prone to syntax errors.
+        // --- STEP 1: PASTE YOUR FIREBASE CONFIG OBJECT HERE ---
+         const firebaseConfig = {
+          apiKey: "AIzaSyDHVU7fE_Mez80jLxezXpa6wt_7RMBZiKE",
+          authDomain: "family-tracker-app-7d5f9.firebaseapp.com",
+          projectId: "family-tracker-app-7d5f9",
+          storageBucket: "family-tracker-app-7d5f9.firebasestorage.app",
+          messagingSenderId: "543941177603",
+          appId: "1:543941177603:web:b33beb54ab9b97098bf936"
+        };
+        // ---------------------------------------------------------
 
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 
-        // The 'firebaseConfig' variable is now available globally from the other script file.
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const auth = getAuth(app);
@@ -152,14 +155,39 @@
         const placesList = document.getElementById('places-list');
         const eventsList = document.getElementById('events-list');
 
+        // This function now initializes the map WHEN WE CALL IT.
         function initMap() {
-            map = new google.maps.Map(document.getElementById("map"), {
-                center: { lat: 34.0522, lng: -118.2437 },
-                zoom: 12, disableDefaultUI: true, zoomControl: true,
-            });
+            if (map) return; // Prevent re-initialization
+            try {
+                 map = new google.maps.Map(document.getElementById("map"), {
+                    center: { lat: 34.0522, lng: -118.2437 },
+                    zoom: 12, disableDefaultUI: true, zoomControl: true,
+                });
+            } catch (error) {
+                console.error("Error initializing Google Map:", error);
+            }
         }
-        window.initMap = initMap;
 
+        async function joinCircle(circleId) {
+            const displayName = displayNameInput.value.trim();
+            if (!displayName) { errorMessage.textContent = "Please enter your name."; return; }
+            if (!circleId) { errorMessage.textContent = "Circle ID is invalid."; return; }
+            
+            // Call initMap() HERE, right before we show the map screen.
+            initMap();
+
+            currentCircleId = circleId;
+            const memberRef = doc(db, `artifacts/${appId}/public/data/circles/${currentCircleId}/members`, userId);
+            await setDoc(memberRef, { displayName }, { merge: true });
+            const circleRef = doc(db, `artifacts/${appId}/public/data/circles`, currentCircleId);
+            await setDoc(circleRef, { createdAt: serverTimestamp() }, { merge: true });
+            shareableCircleId.value = currentCircleId;
+            loginScreen.classList.add('hidden');
+            appScreen.classList.remove('hidden');
+            listenToCircleChanges();
+            startLocationWatcher();
+        }
+        
         // ... (The rest of the functions are unchanged)
 
         function startLocationWatcher() {
@@ -289,22 +317,7 @@
              const eventsRef = collection(db, `artifacts/${appId}/public/data/circles/${currentCircleId}/events`);
              await addDoc(eventsRef, { text: text, timestamp: serverTimestamp() });
         }
-        async function joinCircle(circleId) {
-            const displayName = displayNameInput.value.trim();
-            if (!displayName) { errorMessage.textContent = "Please enter your name."; return; }
-            if (!circleId) { errorMessage.textContent = "Circle ID is invalid."; return; }
-            currentCircleId = circleId;
-            const memberRef = doc(db, `artifacts/${appId}/public/data/circles/${currentCircleId}/members`, userId);
-            await setDoc(memberRef, { displayName }, { merge: true });
-            const circleRef = doc(db, `artifacts/${appId}/public/data/circles`, currentCircleId);
-            await setDoc(circleRef, { createdAt: serverTimestamp() }, { merge: true });
-            shareableCircleId.value = currentCircleId;
-            loginScreen.classList.add('hidden');
-            appScreen.classList.remove('hidden');
-            listenToCircleChanges();
-            startLocationWatcher();
-        }
-
+       
         createCircleBtn.addEventListener('click', () => {
             const newCircleId = Math.random().toString(36).substring(2, 8).toUpperCase();
             circleIdInput.value = newCircleId;
@@ -363,7 +376,8 @@
         }
         main();
     </script>
-    <!-- STEP 2: PASTE YOUR GOOGLE MAPS API KEY HERE -->
-    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCwQ6mKp3JZ-mGuI5q-8OZjZ-5fanvs8H8&libraries=geometry&callback=initMap"></script>
+    <!-- We removed the `&callback=initMap` because we are now calling initMap() ourselves. -->
+    <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCEMacr8C_RmIStBWaYs1nKFtbhoDOx9ag&libraries=geometry"></script>
 </body>
 </html>
+
