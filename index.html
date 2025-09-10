@@ -108,7 +108,7 @@
         import { getFirestore, doc, setDoc, onSnapshot, collection, serverTimestamp, deleteDoc, getDoc, addDoc, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         
         // --- STEP 1: PASTE YOUR FIREBASE CONFIG OBJECT HERE ---
-         const firebaseConfig = {
+        const firebaseConfig = {
           apiKey: "AIzaSyDHVU7fE_Mez80jLxezXpa6wt_7RMBZiKE",
           authDomain: "family-tracker-app-7d5f9.firebaseapp.com",
           projectId: "family-tracker-app-7d5f9",
@@ -155,26 +155,55 @@
         const placesList = document.getElementById('places-list');
         const eventsList = document.getElementById('events-list');
 
-        // This function now initializes the map WHEN WE CALL IT.
-        function initMap() {
+        // This function now accepts coordinates to center the map.
+        function initMap(centerCoords) {
             if (map) return; // Prevent re-initialization
             try {
                  map = new google.maps.Map(document.getElementById("map"), {
-                    center: { lat: 34.0522, lng: -118.2437 },
-                    zoom: 12, disableDefaultUI: true, zoomControl: true,
+                    center: centerCoords,
+                    zoom: 15, // Zoom in a bit closer for a better view
+                    disableDefaultUI: true, 
+                    zoomControl: true,
                 });
             } catch (error) {
                 console.error("Error initializing Google Map:", error);
             }
         }
+        
+        // Helper function to get the current location as a Promise
+        function getCurrentLocation() {
+            return new Promise((resolve, reject) => {
+                if (!navigator.geolocation) {
+                    reject(new Error("Geolocation is not supported by your browser."));
+                    return;
+                }
+                navigator.geolocation.getCurrentPosition(resolve, reject, {
+                    enableHighAccuracy: true,
+                    timeout: 8000,
+                    maximumAge: 0
+                });
+            });
+        }
+
 
         async function joinCircle(circleId) {
             const displayName = displayNameInput.value.trim();
             if (!displayName) { errorMessage.textContent = "Please enter your name."; return; }
             if (!circleId) { errorMessage.textContent = "Circle ID is invalid."; return; }
             
-            // Call initMap() HERE, right before we show the map screen.
-            initMap();
+            let initialCenter = { lat: 12.9345, lng: 77.7479 }; // Default: Varthur, India
+
+            try {
+                const position = await getCurrentLocation();
+                initialCenter = { lat: position.coords.latitude, lng: position.coords.longitude };
+                currentCoords = position.coords;
+            } catch (error) {
+                console.warn("Could not get current location, using default.", error.message);
+                errorMessage.textContent = "Could not get your location. Using default. Please grant location permission.";
+            }
+            
+            // Call initMap() HERE with the determined center coordinates.
+            initMap(initialCenter);
 
             currentCircleId = circleId;
             const memberRef = doc(db, `artifacts/${appId}/public/data/circles/${currentCircleId}/members`, userId);
