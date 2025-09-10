@@ -3,72 +3,107 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Family Tracker - Your Private Location Sharing App</title>
+    <title>ConnectSphere - Your Private Connection</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', sans-serif; }
+        body { 
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(-45deg, #1b2735, #090a0f, #2c3e50, #2980b9);
+            background-size: 400% 400%;
+            animation: gradient 15s ease infinite;
+        }
+        @keyframes gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
         #map { height: 100%; width: 100%; }
         .marker-label {
-            color: black; font-weight: bold; font-size: 14px;
-            background-color: rgba(255, 255, 255, 0.8);
-            padding: 2px 6px; border-radius: 4px; border: 1px solid #ccc;
+            color: #E5E7EB; /* Light gray for dark map */
+            font-weight: bold;
+            font-size: 14px;
+            background-color: rgba(17, 24, 39, 0.8); /* Dark background for label */
+            padding: 4px 8px;
+            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
-        #add-place-modal.hidden { display: none; }
+        .glass-ui {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.2);
+        }
+        .btn-primary {
+            background: rgba(99, 102, 241, 0.8);
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover {
+            background: rgba(99, 102, 241, 1);
+            box-shadow: 0 0 15px rgba(99, 102, 241, 0.5);
+        }
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.4);
+        }
     </style>
 </head>
-<body class="bg-gray-100 antialiased">
+<body class="antialiased">
     <div id="app-container" class="w-full h-screen">
         <!-- Login/Join Screen -->
         <div id="login-screen" class="flex items-center justify-center h-full">
-            <div class="w-full max-w-md p-8 space-y-6 bg-white rounded-xl shadow-lg m-4">
+            <div class="w-full max-w-md p-8 space-y-6 rounded-2xl glass-ui m-4">
                 <div class="text-center">
-                    <h1 class="text-3xl font-bold text-gray-800">Family Tracker</h1>
-                    <p class="mt-2 text-gray-600">Create or join a private circle to share your location.</p>
+                    <h1 class="text-4xl font-bold text-white tracking-wider">ConnectSphere</h1>
+                    <p class="mt-2 text-gray-300">Your private universe, connected.</p>
                 </div>
                 <div class="space-y-4">
                      <div>
-                        <label for="displayName" class="text-sm font-medium text-gray-700">Your Name</label>
-                        <input type="text" id="displayName" placeholder="e.g., Mom, John Doe" class="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm">
+                        <label for="displayName" class="text-sm font-medium text-gray-200">Your Name</label>
+                        <input type="text" id="displayName" placeholder="Enter your display name" class="mt-1 block w-full px-4 py-3 bg-gray-900 bg-opacity-50 border border-gray-600 rounded-lg shadow-sm text-white focus:ring-indigo-500 focus:border-indigo-500">
                     </div>
                     <div>
-                        <label for="circleIdInput" class="text-sm font-medium text-gray-700">Circle ID (to join)</label>
-                        <input type="text" id="circleIdInput" placeholder="Enter ID from a friend or family" class="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm">
+                        <label for="circleIdInput" class="text-sm font-medium text-gray-200">Sphere ID (to join)</label>
+                        <input type="text" id="circleIdInput" placeholder="Enter ID from a friend" class="mt-1 block w-full px-4 py-3 bg-gray-900 bg-opacity-50 border border-gray-600 rounded-lg shadow-sm text-white focus:ring-indigo-500 focus:border-indigo-500">
                     </div>
                 </div>
-                <div class="flex items-center justify-center space-x-4">
-                     <button id="join-circle-btn" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700">Join Circle</button>
-                     <span class="text-gray-500">or</span>
-                     <button id="create-circle-btn" class="w-full flex justify-center py-2 px-4 border border-indigo-600 rounded-md shadow-sm text-sm font-medium text-indigo-600 bg-white hover:bg-indigo-50">Create New</button>
+                <div class="flex items-center justify-center space-x-4 pt-2">
+                     <button id="join-circle-btn" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white btn-primary">Join Sphere</button>
+                     <span class="text-gray-400">or</span>
+                     <button id="create-circle-btn" class="w-full flex justify-center py-3 px-4 border border-gray-500 rounded-lg shadow-sm text-sm font-medium text-white btn-secondary">Create New</button>
                 </div>
-                 <p id="error-message" class="text-sm text-center text-red-500"></p>
+                 <p id="error-message" class="text-sm text-center text-red-400"></p>
             </div>
         </div>
 
         <!-- Main App Screen -->
         <div id="app-screen" class="hidden w-full h-screen md:flex">
             <div id="map" class="flex-grow h-full"></div>
-            <div class="w-full md:w-96 bg-white shadow-xl flex flex-col h-full flex-shrink-0">
-                <div class="p-4 border-b">
+            <div class="w-full md:w-96 glass-ui flex flex-col h-full flex-shrink-0 text-white">
+                <div class="p-4 border-b border-gray-700">
                     <div class="flex justify-between items-center mb-2">
-                        <h2 class="text-xl font-bold text-gray-800">Your Circle</h2>
-                        <button id="leave-circle-btn" class="px-3 py-1 text-xs font-medium text-red-600 bg-red-100 rounded-md hover:bg-red-200">Leave</button>
+                        <h2 class="text-xl font-bold">Your Sphere</h2>
+                        <button id="leave-circle-btn" class="px-3 py-1 text-xs font-medium text-red-300 bg-red-900 bg-opacity-50 rounded-md hover:bg-opacity-75">Leave</button>
                     </div>
                     <div>
-                        <p class="text-sm text-gray-600">Share this ID:</p>
+                        <p class="text-sm text-gray-300">Share this ID:</p>
                         <div class="flex items-center mt-1">
-                            <input type="text" id="shareableCircleId" readonly class="w-full px-2 py-1 text-gray-700 bg-gray-100 border border-gray-300 rounded-md text-sm">
+                            <input type="text" id="shareableCircleId" readonly class="w-full px-2 py-1 text-gray-200 bg-gray-900 bg-opacity-50 border border-gray-600 rounded-md text-sm">
                             <button id="copy-id-btn" class="ml-2 px-3 py-1 text-xs font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700">Copy</button>
                         </div>
                     </div>
                 </div>
-                <div class="p-4 border-b">
-                     <h3 class="font-bold text-gray-700 mb-2">Members</h3>
+                <div class="p-4 border-b border-gray-700">
+                     <h3 class="font-bold mb-2">Members</h3>
                      <div id="members-list" class="space-y-2 max-h-48 overflow-y-auto"></div>
                 </div>
                 <div class="p-4 flex-grow overflow-y-auto">
                     <div class="flex justify-between items-center mb-2">
-                        <h3 class="font-bold text-gray-700">Places & Events</h3>
+                        <h3 class="font-bold">Places & Events</h3>
                         <button id="add-place-btn" class="px-3 py-1 text-xs font-medium text-white bg-green-600 rounded-md hover:bg-green-700">+ Add Place</button>
                     </div>
                     <div id="places-list" class="mb-4 space-y-2"></div>
@@ -79,23 +114,23 @@
     </div>
 
     <!-- Add Place Modal -->
-    <div id="add-place-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-        <div class="bg-white p-6 rounded-lg shadow-xl w-full max-w-sm">
-            <h3 class="text-lg font-bold mb-4">Add a New Place</h3>
-            <p class="text-sm text-gray-600 mb-4">The location will be set to your current position.</p>
+    <div id="add-place-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center">
+        <div class="p-6 rounded-lg shadow-xl w-full max-w-sm glass-ui">
+            <h3 class="text-lg font-bold mb-4 text-white">Add a New Place</h3>
+            <p class="text-sm text-gray-300 mb-4">The location will be set to your current position.</p>
             <div class="space-y-4">
                 <div>
-                    <label for="placeName" class="text-sm font-medium text-gray-700">Place Name</label>
-                    <input type="text" id="placeName" placeholder="e.g., Home, School" class="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm">
+                    <label for="placeName" class="text-sm font-medium text-gray-200">Place Name</label>
+                    <input type="text" id="placeName" placeholder="e.g., Home, School" class="mt-1 block w-full px-3 py-2 bg-gray-900 bg-opacity-50 border border-gray-600 rounded-md shadow-sm text-white">
                 </div>
                 <div>
-                    <label for="placeRadius" class="text-sm font-medium text-gray-700">Radius (in meters)</label>
-                    <input type="number" id="placeRadius" value="100" class="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm">
+                    <label for="placeRadius" class="text-sm font-medium text-gray-200">Radius (in meters)</label>
+                    <input type="number" id="placeRadius" value="100" class="mt-1 block w-full px-3 py-2 bg-gray-900 bg-opacity-50 border border-gray-600 rounded-md shadow-sm text-white">
                 </div>
             </div>
             <div class="mt-6 flex justify-end space-x-3">
-                <button id="cancel-add-place" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300">Cancel</button>
-                <button id="save-place-btn" class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700">Save</button>
+                <button id="cancel-add-place" class="px-4 py-2 text-sm font-medium text-gray-200 btn-secondary rounded-md">Cancel</button>
+                <button id="save-place-btn" class="px-4 py-2 text-sm font-medium text-white btn-primary rounded-md">Save</button>
             </div>
         </div>
     </div>
@@ -107,7 +142,6 @@
         import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, onSnapshot, collection, serverTimestamp, deleteDoc, getDoc, addDoc, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         
-        // --- STEP 1: PASTE YOUR FIREBASE CONFIG OBJECT HERE ---
         const firebaseConfig = {
           apiKey: "AIzaSyDHVU7fE_Mez80jLxezXpa6wt_7RMBZiKE",
           authDomain: "family-tracker-app-7d5f9.firebaseapp.com",
@@ -116,7 +150,6 @@
           messagingSenderId: "543941177603",
           appId: "1:543941177603:web:b33beb54ab9b97098bf936"
         };
-        // ---------------------------------------------------------
 
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
@@ -155,22 +188,23 @@
         const placesList = document.getElementById('places-list');
         const eventsList = document.getElementById('events-list');
 
-        // This function now accepts coordinates to center the map.
+        const mapStyle = [ { "elementType": "geometry", "stylers": [ { "color": "#242f3e" } ] }, { "elementType": "labels.text.fill", "stylers": [ { "color": "#746855" } ] }, { "elementType": "labels.text.stroke", "stylers": [ { "color": "#242f3e" } ] }, { "featureType": "administrative.locality", "elementType": "labels.text.fill", "stylers": [ { "color": "#d59563" } ] }, { "featureType": "poi", "elementType": "labels.text.fill", "stylers": [ { "color": "#d59563" } ] }, { "featureType": "poi.park", "elementType": "geometry", "stylers": [ { "color": "#263c3f" } ] }, { "featureType": "poi.park", "elementType": "labels.text.fill", "stylers": [ { "color": "#6b9a76" } ] }, { "featureType": "road", "elementType": "geometry", "stylers": [ { "color": "#38414e" } ] }, { "featureType": "road", "elementType": "geometry.stroke", "stylers": [ { "color": "#212a37" } ] }, { "featureType": "road", "elementType": "labels.text.fill", "stylers": [ { "color": "#9ca5b3" } ] }, { "featureType": "road.highway", "elementType": "geometry", "stylers": [ { "color": "#746855" } ] }, { "featureType": "road.highway", "elementType": "geometry.stroke", "stylers": [ { "color": "#1f2835" } ] }, { "featureType": "road.highway", "elementType": "labels.text.fill", "stylers": [ { "color": "#f3d19c" } ] }, { "featureType": "transit", "elementType": "geometry", "stylers": [ { "color": "#2f3948" } ] }, { "featureType": "transit.station", "elementType": "labels.text.fill", "stylers": [ { "color": "#d59563" } ] }, { "featureType": "water", "elementType": "geometry", "stylers": [ { "color": "#17263c" } ] }, { "featureType": "water", "elementType": "labels.text.fill", "stylers": [ { "color": "#515c6d" } ] }, { "featureType": "water", "elementType": "labels.text.stroke", "stylers": [ { "color": "#17263c" } ] } ];
+
         function initMap(centerCoords) {
-            if (map) return; // Prevent re-initialization
+            if (map) return;
             try {
                  map = new google.maps.Map(document.getElementById("map"), {
                     center: centerCoords,
-                    zoom: 15, // Zoom in a bit closer for a better view
+                    zoom: 15,
                     disableDefaultUI: true, 
                     zoomControl: true,
+                    styles: mapStyle
                 });
             } catch (error) {
                 console.error("Error initializing Google Map:", error);
             }
         }
         
-        // Helper function to get the current location as a Promise
         function getCurrentLocation() {
             return new Promise((resolve, reject) => {
                 if (!navigator.geolocation) {
@@ -185,13 +219,12 @@
             });
         }
 
-
         async function joinCircle(circleId) {
             const displayName = displayNameInput.value.trim();
             if (!displayName) { errorMessage.textContent = "Please enter your name."; return; }
             if (!circleId) { errorMessage.textContent = "Circle ID is invalid."; return; }
             
-            let initialCenter = { lat: 12.9345, lng: 77.7479 }; // Default: Varthur, India
+            let initialCenter = { lat: 12.9345, lng: 77.7479 };
 
             try {
                 const position = await getCurrentLocation();
@@ -202,7 +235,6 @@
                 errorMessage.textContent = "Could not get your location. Using default. Please grant location permission.";
             }
             
-            // Call initMap() HERE with the determined center coordinates.
             initMap(initialCenter);
 
             currentCircleId = circleId;
@@ -217,8 +249,6 @@
             startLocationWatcher();
         }
         
-        // ... (The rest of the functions are unchanged)
-
         function startLocationWatcher() {
             if (watchId) navigator.geolocation.clearWatch(watchId);
             if ('geolocation' in navigator) {
@@ -298,15 +328,17 @@
         function renderMemberListItem(memberId, memberData) {
             const lastUpdatedText = memberData.lastUpdated ? new Date(memberData.lastUpdated.seconds * 1000).toLocaleTimeString() : '...';
             const isCurrentUser = memberId === userId;
-            const indicatorColor = isCurrentUser ? 'bg-green-500' : 'bg-blue-500';
-            membersList.innerHTML += `<div class="flex items-center p-2 bg-gray-50 rounded-md"><div class="w-3 h-3 ${indicatorColor} rounded-full mr-3 flex-shrink-0"></div><div><p class="font-semibold text-gray-800 text-sm">${memberData.displayName || 'Unnamed'}${isCurrentUser ? ' (You)' : ''}</p><p class="text-xs text-gray-500">Last seen: ${lastUpdatedText}</p></div></div>`;
+            const indicatorColor = isCurrentUser ? 'bg-green-400' : 'bg-blue-400';
+            const itemHtml = `<div class="flex items-center p-2 rounded-md glass-ui" style="background: rgba(0,0,0,0.2);"><div class="w-3 h-3 ${indicatorColor} rounded-full mr-3 flex-shrink-0"></div><div><p class="font-semibold text-gray-200 text-sm">${memberData.displayName || 'Unnamed'}${isCurrentUser ? ' (You)' : ''}</p><p class="text-xs text-gray-400">Last seen: ${lastUpdatedText}</p></div></div>`;
+            membersList.insertAdjacentHTML('beforeend', itemHtml);
         }
         function renderPlaceListItem(placeId, placeData) {
-            placesList.innerHTML += `<div class="p-2 bg-gray-100 rounded-md text-sm">${placeData.name} (${placeData.radius}m)</div>`;
+            placesList.innerHTML += `<div class="p-2 rounded-md text-sm text-gray-200" style="background: rgba(0,0,0,0.2);">${placeData.name} (${placeData.radius}m)</div>`;
         }
         function renderEventListItem(eventData) {
             const eventTime = new Date(eventData.timestamp.seconds * 1000).toLocaleTimeString();
-            eventsList.innerHTML += `<div class="p-2 bg-indigo-50 rounded-md text-sm"><p class="font-medium text-indigo-800">${eventData.text}</p><p class="text-xs text-indigo-500 text-right">${eventTime}</p></div>`;
+            const eventHtml = `<div class="p-2 rounded-md text-sm" style="background: rgba(0,0,0,0.2);"><p class="font-medium text-gray-300">${eventData.text}</p><p class="text-xs text-indigo-400 text-right">${eventTime}</p></div>`;
+            eventsList.insertAdjacentHTML('beforeend', eventHtml);
         }
         function updateMarkerOnMap(memberId, memberData) {
             if (!memberData.lat || !memberData.lng) return;
@@ -314,7 +346,7 @@
             if (markers[memberId]) {
                 markers[memberId].setPosition(position);
             } else {
-                markers[memberId] = new google.maps.Marker({ position, map, label: { text: memberData.displayName || '?', className: 'marker-label' }, icon: { path: google.maps.SymbolPath.CIRCLE, scale: memberId === userId ? 10 : 8, fillColor: memberId === userId ? '#10B981' : '#3B82F6', fillOpacity: 1, strokeWeight: 2, strokeColor: '#FFFFFF' } });
+                markers[memberId] = new google.maps.Marker({ position, map, label: { text: memberData.displayName || '?', className: 'marker-label' }, icon: { path: google.maps.SymbolPath.CIRCLE, scale: memberId === userId ? 10 : 8, fillColor: memberId === userId ? '#34D399' : '#60A5FA', fillOpacity: 1, strokeWeight: 2, strokeColor: '#1F2937' } });
             }
         }
         function updatePlaceOnMap(placeId, placeData) {
@@ -323,7 +355,7 @@
                  placeCircles[placeId].setCenter(position);
                  placeCircles[placeId].setRadius(placeData.radius);
             } else {
-                placeCircles[placeId] = new google.maps.Circle({ strokeColor: "#FF0000", strokeWeight: 2, strokeOpacity: 0.8, fillColor: "#FF0000", fillOpacity: 0.2, map, center: position, radius: placeData.radius });
+                placeCircles[placeId] = new google.maps.Circle({ strokeColor: "#F472B6", strokeWeight: 2, strokeOpacity: 0.9, fillColor: "#F472B6", fillOpacity: 0.15, map, center: position, radius: placeData.radius });
             }
         }
         function removeMarker(memberId) { if (markers[memberId]) { markers[memberId].setMap(null); delete markers[memberId]; } }
@@ -354,7 +386,7 @@
         });
         joinCircleBtn.addEventListener('click', () => {
             const circleId = circleIdInput.value.trim();
-            if (!circleId) { errorMessage.textContent = 'Please enter a Circle ID to join.'; return; }
+            if (!circleId) { errorMessage.textContent = 'Please enter a Sphere ID to join.'; return; }
             joinCircle(circleId);
         });
         leaveCircleBtn.addEventListener('click', async () => {
@@ -379,7 +411,10 @@
             setTimeout(() => { copyIdBtn.textContent = 'Copy'; }, 2000);
         });
         addPlaceBtn.addEventListener('click', () => {
-            if (!currentCoords) { alert("Please enable location to add a place."); return; }
+            if (!currentCoords) { 
+                alert("Please enable location to add a place."); 
+                return; 
+            }
             addPlaceModal.classList.remove('hidden');
         });
         cancelAddPlace.addEventListener('click', () => addPlaceModal.classList.add('hidden'));
@@ -405,7 +440,6 @@
         }
         main();
     </script>
-    <!-- We removed the `&callback=initMap` because we are now calling initMap() ourselves. -->
     <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCEMacr8C_RmIStBWaYs1nKFtbhoDOx9ag&libraries=geometry"></script>
 </body>
 </html>
