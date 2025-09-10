@@ -20,13 +20,14 @@
         }
         #map { height: 100%; width: 100%; }
         .marker-label {
-            color: #E5E7EB; /* Light gray for dark map */
+            color: #1F2937; /* Dark gray for light map */
             font-weight: bold;
             font-size: 14px;
-            background-color: rgba(17, 24, 39, 0.8); /* Dark background for label */
+            background-color: rgba(255, 255, 255, 0.85);
             padding: 4px 8px;
             border-radius: 6px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         .glass-ui {
             background: rgba(255, 255, 255, 0.1);
@@ -50,6 +51,28 @@
         .btn-secondary:hover {
             background: rgba(255, 255, 255, 0.4);
         }
+
+        /* --- NEW STYLES FOR POLISH --- */
+        /* Custom Scrollbar */
+        #members-list::-webkit-scrollbar { width: 8px; }
+        #members-list::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); border-radius: 4px;}
+        #members-list::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.6); border-radius: 4px;}
+        #members-list::-webkit-scrollbar-thumb:hover { background: rgba(99, 102, 241, 0.8); }
+
+        /* Input Focus Glow */
+        input:focus {
+            box-shadow: 0 0 15px rgba(99, 102, 241, 0.5) !important;
+            border-color: rgba(99, 102, 241, 0.8) !important;
+        }
+
+        /* Interactive List Items */
+        .interactive-item {
+            transition: transform 0.2s ease-in-out, background-color 0.2s ease;
+        }
+        .interactive-item:hover {
+            transform: scale(1.03);
+            background-color: rgba(0,0,0,0.3);
+        }
     </style>
 </head>
 <body class="antialiased">
@@ -64,11 +87,11 @@
                 <div class="space-y-4">
                      <div>
                         <label for="displayName" class="text-sm font-medium text-gray-200">Your Name</label>
-                        <input type="text" id="displayName" placeholder="Enter your display name" class="mt-1 block w-full px-4 py-3 bg-gray-900 bg-opacity-50 border border-gray-600 rounded-lg shadow-sm text-white focus:ring-indigo-500 focus:border-indigo-500">
+                        <input type="text" id="displayName" placeholder="Enter your display name" class="mt-1 block w-full px-4 py-3 bg-gray-900 bg-opacity-50 border border-gray-600 rounded-lg shadow-sm text-white focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300">
                     </div>
                     <div>
                         <label for="circleIdInput" class="text-sm font-medium text-gray-200">Sphere ID (to join)</label>
-                        <input type="text" id="circleIdInput" placeholder="Enter ID from a friend" class="mt-1 block w-full px-4 py-3 bg-gray-900 bg-opacity-50 border border-gray-600 rounded-lg shadow-sm text-white focus:ring-indigo-500 focus:border-indigo-500">
+                        <input type="text" id="circleIdInput" placeholder="Enter ID from a friend" class="mt-1 block w-full px-4 py-3 bg-gray-900 bg-opacity-50 border border-gray-600 rounded-lg shadow-sm text-white focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-300">
                     </div>
                 </div>
                 <div class="flex items-center justify-center space-x-4 pt-2">
@@ -102,7 +125,7 @@
                      <div id="members-list" class="space-y-2 max-h-48 overflow-y-auto"></div>
                 </div>
                 <div class="p-4 flex-grow overflow-y-auto">
-                    <div class="flex justify-between items-center mb-2">
+                    <div class="flex justify-between items-center my-4">
                         <h3 class="font-bold">Places & Events</h3>
                         <button id="add-place-btn" class="px-3 py-1 text-xs font-medium text-white bg-green-600 rounded-md hover:bg-green-700">+ Add Place</button>
                     </div>
@@ -121,11 +144,11 @@
             <div class="space-y-4">
                 <div>
                     <label for="placeName" class="text-sm font-medium text-gray-200">Place Name</label>
-                    <input type="text" id="placeName" placeholder="e.g., Home, School" class="mt-1 block w-full px-3 py-2 bg-gray-900 bg-opacity-50 border border-gray-600 rounded-md shadow-sm text-white">
+                    <input type="text" id="placeName" placeholder="e.g., Home, School" class="mt-1 block w-full px-3 py-2 bg-gray-900 bg-opacity-50 border border-gray-600 rounded-md shadow-sm text-white transition-all duration-300">
                 </div>
                 <div>
                     <label for="placeRadius" class="text-sm font-medium text-gray-200">Radius (in meters)</label>
-                    <input type="number" id="placeRadius" value="100" class="mt-1 block w-full px-3 py-2 bg-gray-900 bg-opacity-50 border border-gray-600 rounded-md shadow-sm text-white">
+                    <input type="number" id="placeRadius" value="100" class="mt-1 block w-full px-3 py-2 bg-gray-900 bg-opacity-50 border border-gray-600 rounded-md shadow-sm text-white transition-all duration-300">
                 </div>
             </div>
             <div class="mt-6 flex justify-end space-x-3">
@@ -188,8 +211,6 @@
         const placesList = document.getElementById('places-list');
         const eventsList = document.getElementById('events-list');
 
-        const mapStyle = [ { "elementType": "geometry", "stylers": [ { "color": "#242f3e" } ] }, { "elementType": "labels.text.fill", "stylers": [ { "color": "#746855" } ] }, { "elementType": "labels.text.stroke", "stylers": [ { "color": "#242f3e" } ] }, { "featureType": "administrative.locality", "elementType": "labels.text.fill", "stylers": [ { "color": "#d59563" } ] }, { "featureType": "poi", "elementType": "labels.text.fill", "stylers": [ { "color": "#d59563" } ] }, { "featureType": "poi.park", "elementType": "geometry", "stylers": [ { "color": "#263c3f" } ] }, { "featureType": "poi.park", "elementType": "labels.text.fill", "stylers": [ { "color": "#6b9a76" } ] }, { "featureType": "road", "elementType": "geometry", "stylers": [ { "color": "#38414e" } ] }, { "featureType": "road", "elementType": "geometry.stroke", "stylers": [ { "color": "#212a37" } ] }, { "featureType": "road", "elementType": "labels.text.fill", "stylers": [ { "color": "#9ca5b3" } ] }, { "featureType": "road.highway", "elementType": "geometry", "stylers": [ { "color": "#746855" } ] }, { "featureType": "road.highway", "elementType": "geometry.stroke", "stylers": [ { "color": "#1f2835" } ] }, { "featureType": "road.highway", "elementType": "labels.text.fill", "stylers": [ { "color": "#f3d19c" } ] }, { "featureType": "transit", "elementType": "geometry", "stylers": [ { "color": "#2f3948" } ] }, { "featureType": "transit.station", "elementType": "labels.text.fill", "stylers": [ { "color": "#d59563" } ] }, { "featureType": "water", "elementType": "geometry", "stylers": [ { "color": "#17263c" } ] }, { "featureType": "water", "elementType": "labels.text.fill", "stylers": [ { "color": "#515c6d" } ] }, { "featureType": "water", "elementType": "labels.text.stroke", "stylers": [ { "color": "#17263c" } ] } ];
-
         function initMap(centerCoords) {
             if (map) return;
             try {
@@ -198,7 +219,6 @@
                     zoom: 15,
                     disableDefaultUI: true, 
                     zoomControl: true,
-                    styles: mapStyle
                 });
             } catch (error) {
                 console.error("Error initializing Google Map:", error);
@@ -329,15 +349,15 @@
             const lastUpdatedText = memberData.lastUpdated ? new Date(memberData.lastUpdated.seconds * 1000).toLocaleTimeString() : '...';
             const isCurrentUser = memberId === userId;
             const indicatorColor = isCurrentUser ? 'bg-green-400' : 'bg-blue-400';
-            const itemHtml = `<div class="flex items-center p-2 rounded-md glass-ui" style="background: rgba(0,0,0,0.2);"><div class="w-3 h-3 ${indicatorColor} rounded-full mr-3 flex-shrink-0"></div><div><p class="font-semibold text-gray-200 text-sm">${memberData.displayName || 'Unnamed'}${isCurrentUser ? ' (You)' : ''}</p><p class="text-xs text-gray-400">Last seen: ${lastUpdatedText}</p></div></div>`;
+            const itemHtml = `<div class="flex items-center p-2 rounded-md glass-ui interactive-item" style="background: rgba(0,0,0,0.2);"><div class="w-3 h-3 ${indicatorColor} rounded-full mr-3 flex-shrink-0"></div><div><p class="font-semibold text-gray-200 text-sm">${memberData.displayName || 'Unnamed'}${isCurrentUser ? ' (You)' : ''}</p><p class="text-xs text-gray-400">Last seen: ${lastUpdatedText}</p></div></div>`;
             membersList.insertAdjacentHTML('beforeend', itemHtml);
         }
         function renderPlaceListItem(placeId, placeData) {
-            placesList.innerHTML += `<div class="p-2 rounded-md text-sm text-gray-200" style="background: rgba(0,0,0,0.2);">${placeData.name} (${placeData.radius}m)</div>`;
+            placesList.innerHTML += `<div class="p-2 rounded-md text-sm text-gray-200 interactive-item" style="background: rgba(0,0,0,0.2);">${placeData.name} (${placeData.radius}m)</div>`;
         }
         function renderEventListItem(eventData) {
             const eventTime = new Date(eventData.timestamp.seconds * 1000).toLocaleTimeString();
-            const eventHtml = `<div class="p-2 rounded-md text-sm" style="background: rgba(0,0,0,0.2);"><p class="font-medium text-gray-300">${eventData.text}</p><p class="text-xs text-indigo-400 text-right">${eventTime}</p></div>`;
+            const eventHtml = `<div class="p-2 rounded-md text-sm interactive-item" style="background: rgba(0,0,0,0.2);"><p class="font-medium text-gray-300">${eventData.text}</p><p class="text-xs text-indigo-400 text-right">${eventTime}</p></div>`;
             eventsList.insertAdjacentHTML('beforeend', eventHtml);
         }
         function updateMarkerOnMap(memberId, memberData) {
@@ -346,7 +366,23 @@
             if (markers[memberId]) {
                 markers[memberId].setPosition(position);
             } else {
-                markers[memberId] = new google.maps.Marker({ position, map, label: { text: memberData.displayName || '?', className: 'marker-label' }, icon: { path: google.maps.SymbolPath.CIRCLE, scale: memberId === userId ? 10 : 8, fillColor: memberId === userId ? '#34D399' : '#60A5FA', fillOpacity: 1, strokeWeight: 2, strokeColor: '#1F2937' } });
+                markers[memberId] = new google.maps.Marker({ 
+                    position, 
+                    map, 
+                    label: { 
+                        text: memberData.displayName || '?', 
+                        className: 'marker-label' 
+                    }, 
+                    icon: { 
+                        path: google.maps.SymbolPath.CIRCLE, 
+                        scale: memberId === userId ? 10 : 8, 
+                        fillColor: memberId === userId ? '#34D399' : '#60A5FA', 
+                        fillOpacity: 1, 
+                        strokeWeight: 2, 
+                        strokeColor: '#FFFFFF',
+                        labelOrigin: new google.maps.Point(0, 20)
+                    } 
+                });
             }
         }
         function updatePlaceOnMap(placeId, placeData) {
