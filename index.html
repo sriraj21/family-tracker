@@ -96,7 +96,7 @@
             </div>
             <div class="mt-6 flex justify-end space-x-3">
                 <button id="cancel-add-place" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300">Cancel</button>
-                <button id="save-place-btn" class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700">Save</button>
+                <button id="save-place-btn" class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700">Save</button>
             </div>
         </div>
     </div>
@@ -111,14 +111,14 @@
         
         // --- STEP 1: PASTE YOUR FIREBASE CONFIG OBJECT HERE ---
         // Replace the entire object below with the one you copy from your Firebase project settings.
-            const firebaseConfig = {
-            apiKey: "AIzaSyDHVU7fE_Mez80jLxezXpa6wt_7RMBZiKE",
-            authDomain: "family-tracker-app-7d5f9.firebaseapp.com",
-            projectId: "family-tracker-app-7d5f9",
-            storageBucket: "family-tracker-app-7d5f9.firebasestorage.app",
-            messagingSenderId: "543941177603",
-            appId: "1:543941177603:web:b33beb54ab9b97098bf936"
-            };
+        const firebaseConfig = {
+          apiKey: "AIzaSyDHVU7fE_Mez80jLxezXpa6wt_7RMBZiKE",
+          authDomain: "family-tracker-app-7d5f9.firebaseapp.com",
+          projectId: "family-tracker-app-7d5f9",
+          storageBucket: "family-tracker-app-7d5f9.firebasestorage.app",
+          messagingSenderId: "543941177603",
+          appId: "1:543941177603:web:b33beb54ab9b97098bf936"
+        };
         // ---------------------------------------------------------
 
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
@@ -372,4 +372,3 @@
     <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCqnryoXw9YC8uL_0zPvqv9_5ewcbctaAk&libraries=geometry&callback=initMap"></script>
 </body>
 </html>
-
